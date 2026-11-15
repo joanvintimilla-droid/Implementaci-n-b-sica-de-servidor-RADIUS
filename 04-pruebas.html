@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>04 · Pruebas y troubleshooting | RADIUS</title><link rel="stylesheet" href="css/styles.css"></head>
+<body><header class="page-header"><nav class="topnav"><a class="brand" href="index.html">RADIUS<span>LAB</span></a><div class="nav-actions"><a href="index.html">← Inicio</a><a class="source-button" href="https://github.com/joanvintimilla-droid/Implementaci-n-b-sica-de-servidor-RADIUS/blob/main/README.md" target="_blank" rel="noopener">README original ↗</a></div></nav><p class="eyebrow">04 / VALIDACIÓN</p><h1>Pruebas y troubleshooting</h1><p class="lead">Comprobaciones para verificar que el servidor responde y autentica correctamente.</p></header>
+<main class="container article">
+<h2>Pruebas de aceptación</h2><div class="tests">
+<div><b>TC-01</b><code>freeradius -CX</code><span>Configuración válida: Configuration appears to be OK.</span></div>
+<div><b>TC-02</b><code>systemctl status freeradius</code><span>Servicio activo: active (running).</span></div>
+<div><b>TC-03</b><code>ss -lunp</code><span>Puertos UDP 1812 y 1813 en escucha.</span></div>
+<div><b>TC-04</b><code>radtest juan juan localhost 0 &lt;secreto&gt;</code><span>Credenciales correctas: Access-Accept.</span></div>
+<div><b>TC-05</b><span>Probar una clave incorrecta.</span><span>Resultado esperado: Access-Reject.</span></div>
+<div><b>Accounting</b><span>Verificar el puerto 1813.</span><span>Respuesta esperada: Accounting-Response.</span></div>
+<div><b>Carga</b><code>radclient -c 100 -p 10</code><span>100 peticiones, 10 en paralelo.</span></div>
+<div><b>TC-06</b><code>freeradius -X</code><span>Observar el rechazo de sesión PEAP en la salida de depuración.</span></div>
+<div><b>TC-07</b><code>tcpdump -ni eth0 host 192.168.0.1</code><span>Comprobar tráfico real del router.</span></div>
+<div><b>TC-08</b><code>timedatectl</code><span>Verificar System clock synchronized: yes.</span></div>
+<div><b>TC-10</b><code>ss -lunp</code><span>Confirmar que 1812/1813 continúan en escucha.</span></div>
+</div>
+<h2>Verificaciones adicionales de referencia</h2><p>Para HTTP/FTP/NTP en producción, el README propone estas comprobaciones:</p><pre><code>ntpq -p
+curl -I http://servidor
+curl -T archivo ftp://servidor/</code></pre><p>Para FTP activo también se menciona <code>--ftp-port -</code>.</p>
+<h2>Errores frecuentes y soluciones</h2><div class="table-wrap"><table><thead><tr><th>Problema</th><th>Causa posible</th><th>Solución documentada</th></tr></thead><tbody><tr><td>El router no llega al RADIUS (unknown client).</td><td>Firewall, IP o secreto distintos.</td><td><code>firewall-cmd --add-service=radius</code>; igualar IP y secreto; revisar con <code>tcpdump -ni eth0 udp port 1812</code>.</td></tr><tr><td>SELinux bloquea lectura o escritura.</td><td>Etiquetas incorrectas.</td><td><code>ausearch -m avc</code> y <code>restorecon -Rv /etc/raddb</code>. No usar <code>setenforce 0</code>.</td></tr><tr><td>Error de certificado aunque la clave sea correcta.</td><td>Reloj desfasado.</td><td>Revisar <code>timedatectl</code>, activar <code>chronyd</code> con <code>systemctl enable --now chronyd</code> y regenerar certificados con <code>make destroycerts && make</code>.</td></tr></tbody></table></div>
+<div class="callout"><b>Consejo</b><p>Ejecuta las pruebas en orden: primero valida la configuración, después el servicio y los puertos, y finalmente la autenticación desde el cliente.</p></div>
+<nav class="pager"><a href="03-seguridad.html">← Anterior: Seguridad</a><a href="index.html">Volver al inicio ↑</a></nav>
+</main><footer>RADIUS LAB · <a href="index.html">Volver al inicio</a> · <a href="https://github.com/joanvintimilla-droid/Implementaci-n-b-sica-de-servidor-RADIUS/blob/main/README.md" target="_blank" rel="noopener">README original con capturas</a></footer></body></html>
